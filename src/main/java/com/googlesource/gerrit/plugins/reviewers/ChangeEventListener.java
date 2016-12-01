@@ -33,8 +33,10 @@ import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.AccountByEmailCache;
 import com.google.gerrit.server.account.AccountResolver;
 import com.google.gerrit.server.account.GroupMembers;
+import com.google.gerrit.server.events.CommentAddedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
+import com.google.gerrit.server.events.PatchSetEvent;
 import com.google.gerrit.server.git.GitRepositoryManager;
 import com.google.gerrit.server.git.WorkQueue;
 import com.google.gerrit.server.group.GroupsCollection;
@@ -114,10 +116,10 @@ class ChangeEventListener implements EventListener {
 
   @Override
   public void onEvent(Event event) {
-    if (!(event instanceof PatchSetCreatedEvent)) {
+    if (!(event instanceof PatchSetCreatedEvent) && !(event instanceof CommentAddedEvent)) {
       return;
     }
-    PatchSetCreatedEvent e = (PatchSetCreatedEvent) event;
+    PatchSetEvent e = (PatchSetEvent) event;
     Project.NameKey projectName = new Project.NameKey(e.change.project);
     // TODO(davido): we have to cache per project configuration
     ReviewersConfig config = configFactory.create(projectName);
@@ -152,7 +154,7 @@ class ChangeEventListener implements EventListener {
 
       final Runnable task =
           reviewersFactory.create(change,
-              toAccounts(reviewers, projectName, e.uploader.email));
+              toAccounts(reviewers, projectName, e.patchSet.uploader.email));
 
       workQueue.getDefaultQueue().submit(new Runnable() {
         @Override
