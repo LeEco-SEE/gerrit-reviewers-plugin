@@ -33,9 +33,11 @@ import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.AccountByEmailCache;
 import com.google.gerrit.server.account.AccountResolver;
 import com.google.gerrit.server.account.GroupMembers;
+import com.google.gerrit.server.events.CommentAddedEvent;
 import com.google.gerrit.server.events.DraftPublishedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
+import com.google.gerrit.server.events.PatchSetEvent;
 import com.google.gerrit.server.git.GitRepositoryManager;
 import com.google.gerrit.server.git.WorkQueue;
 import com.google.gerrit.server.group.GroupsCollection;
@@ -120,6 +122,11 @@ class ChangeEventListener implements EventListener {
       onEvent(new Project.NameKey(e.change.project),
           Integer.parseInt(e.change.number),
           Integer.parseInt(e.patchSet.number), e.uploader.email);
+    } else if (event instanceof CommentAddedEvent) {
+      CommentAddedEvent e = (CommentAddedEvent) event;
+      onEvent(new Project.NameKey(e.change.project),
+          Integer.parseInt(e.change.number),
+          Integer.parseInt(e.patchSet.number), e.patchSet.uploader.email);
     } else if (event instanceof DraftPublishedEvent) {
       DraftPublishedEvent e = (DraftPublishedEvent) event;
       onEvent(new Project.NameKey(e.change.project),
