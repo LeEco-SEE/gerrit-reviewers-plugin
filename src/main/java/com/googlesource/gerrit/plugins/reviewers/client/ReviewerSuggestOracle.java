@@ -15,12 +15,12 @@
 package com.googlesource.gerrit.plugins.reviewers.client;
 
 import com.google.gerrit.client.rpc.NativeMap;
+import com.google.gerrit.client.rpc.Natives;
+import com.google.gerrit.client.ui.HighlightSuggestion;
 import com.google.gerrit.plugin.client.rpc.RestApi;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SuggestOracle;
-import com.google.gerrit.client.rpc.Natives;
-import com.google.gerrit.client.ui.HighlightSuggestion;
 
 import java.util.ArrayList;
 import java.util.Collections;
