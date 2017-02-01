@@ -16,9 +16,9 @@ package com.googlesource.gerrit.plugins.reviewers;
 
 import static com.google.gerrit.server.project.ProjectResource.PROJECT_KIND;
 
-import com.google.gerrit.common.EventListener;
 import com.google.gerrit.extensions.annotations.PluginName;
 import com.google.gerrit.extensions.config.FactoryModule;
+import com.google.gerrit.extensions.events.RevisionCreatedListener;
 import com.google.gerrit.extensions.registration.DynamicSet;
 import com.google.gerrit.extensions.restapi.RestApiModule;
 import com.google.gerrit.extensions.webui.GwtPlugin;
@@ -57,7 +57,7 @@ public class Module extends FactoryModule {
         .toInstance(new GwtPlugin("reviewers"));
     }
 
-    DynamicSet.bind(binder(), EventListener.class)
+    DynamicSet.bind(binder(), RevisionCreatedListener.class)
         .to(ChangeEventListener.class);
     factory(DefaultReviewers.Factory.class);
     factory(ReviewersConfig.Factory.class);

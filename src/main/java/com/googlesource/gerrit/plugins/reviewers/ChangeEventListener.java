@@ -20,8 +20,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.gerrit.common.EventListener;
 import com.google.gerrit.common.errors.NoSuchGroupException;
+import com.google.gerrit.extensions.common.ChangeInfo;
+import com.google.gerrit.extensions.events.RevisionCreatedListener;
 import com.google.gerrit.extensions.restapi.UnprocessableEntityException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Change;
@@ -32,9 +33,6 @@ import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.AccountByEmailCache;
 import com.google.gerrit.server.account.AccountResolver;
 import com.google.gerrit.server.account.GroupMembers;
-import com.google.gerrit.server.data.ChangeAttribute;
-import com.google.gerrit.server.events.Event;
-import com.google.gerrit.server.events.PatchSetCreatedEvent;
 import com.google.gerrit.server.git.GitRepositoryManager;
 import com.google.gerrit.server.git.WorkQueue;
 import com.google.gerrit.server.group.GroupsCollection;
@@ -62,7 +60,7 @@ import java.util.List;
 import java.util.Set;
 
 @Singleton
-class ChangeEventListener implements EventListener {
+class ChangeEventListener implements RevisionCreatedListener {
   private static final Logger log = LoggerFactory
       .getLogger(ChangeEventListener.class);
 
@@ -114,12 +112,8 @@ class ChangeEventListener implements EventListener {
   }
 
   @Override
-  public void onEvent(Event event) {
-    if (!(event instanceof PatchSetCreatedEvent)) {
-      return;
-    }
-    PatchSetCreatedEvent e = (PatchSetCreatedEvent) event;
-    ChangeAttribute c = e.change.get();
+  public void onRevisionCreated(Event event) {
+    ChangeInfo c = event.getChange();
     Project.NameKey projectName = new Project.NameKey(c.project);
     // TODO(davido): we have to cache per project configuration
     ReviewersConfig config = configFactory.create(projectName);
@@ -133,7 +127,7 @@ class ChangeEventListener implements EventListener {
         RevWalk rw = new RevWalk(git);
         ReviewDb reviewDb = schemaFactory.open()) {
       ChangeData changeData = changeDataFactory.create(
-          reviewDb, projectName, new Change.Id(c.number));
+          reviewDb, projectName, new Change.Id(c._number));
       Set<String> reviewers = findReviewers(sections, changeData);
       if (reviewers.isEmpty()) {
         return;
@@ -142,7 +136,7 @@ class ChangeEventListener implements EventListener {
       final Change change = changeData.change();
       final Runnable task = reviewersFactory.create(change,
           toAccounts(reviewDb, reviewers, projectName,
-              e.uploader.get().email));
+              event.getWho().email));
 
       workQueue.getDefaultQueue().submit(new Runnable() {
         ReviewDb db = null;
