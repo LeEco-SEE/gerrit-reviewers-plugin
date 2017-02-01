@@ -20,7 +20,6 @@ import com.google.gerrit.extensions.restapi.RestReadView;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
-import com.google.gerrit.server.IdentifiedUser.GenericFactory;
 import com.google.gerrit.server.ReviewersUtil;
 import com.google.gerrit.server.ReviewersUtil.VisibilityControl;
 import com.google.gerrit.server.account.AccountVisibility;
@@ -40,7 +39,7 @@ public class SuggestProjectReviewers extends SuggestReviewers
       implements RestReadView<ProjectResource> {
   @Inject
   SuggestProjectReviewers(AccountVisibility av,
-      GenericFactory identifiedUserFactory,
+      IdentifiedUser.GenericFactory identifiedUserFactory,
       Provider<ReviewDb> dbProvider,
       @GerritServerConfig Config cfg,
       ReviewersUtil reviewersUtil) {
