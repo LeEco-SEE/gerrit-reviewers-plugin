@@ -15,6 +15,8 @@
 package com.googlesource.gerrit.plugins.reviewers;
 
 import com.google.gerrit.extensions.api.GerritApi;
+import com.google.gerrit.extensions.api.changes.AddReviewerInput;
+import com.google.gerrit.extensions.api.changes.ReviewInput;
 import com.google.gerrit.extensions.api.changes.ChangeApi;
 import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.client.Account;
@@ -25,6 +27,7 @@ import com.google.inject.assistedinject.Assisted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 class DefaultReviewers implements Runnable {
@@ -62,10 +65,19 @@ class DefaultReviewers implements Runnable {
    */
   private void addReviewers(Set<Account> reviewers, Change change) {
     try {
-      ChangeApi cApi = gApi.changes().id(change.getId().get());
+      // TODO(davido): Switch back to using changes API again,
+      // when it supports batch mode for adding reviewers
+      ReviewInput in = new ReviewInput();
+      in.reviewers = new ArrayList<>(reviewers.size());
       for (Account account : reviewers) {
-        cApi.addReviewer(account.getId().toString());
+        AddReviewerInput addReviewerInput = new AddReviewerInput();
+        addReviewerInput.reviewer = account.getId().toString();
+        in.reviewers.add(addReviewerInput);
       }
+      gApi.changes()
+          .id(change.getId().get())
+          .current()
+          .review(in);
     } catch (RestApiException e) {
       log.error("Couldn't add reviewers to the change", e);
     }
