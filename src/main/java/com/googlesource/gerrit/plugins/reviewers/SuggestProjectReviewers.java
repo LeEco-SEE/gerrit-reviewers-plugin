@@ -15,6 +15,7 @@
 package com.googlesource.gerrit.plugins.reviewers;
 
 import com.google.gerrit.extensions.common.SuggestedReviewerInfo;
+import com.google.gerrit.extensions.restapi.AuthException;
 import com.google.gerrit.extensions.restapi.BadRequestException;
 import com.google.gerrit.extensions.restapi.RestReadView;
 import com.google.gerrit.reviewdb.client.Account;
@@ -25,6 +26,9 @@ import com.google.gerrit.server.ReviewersUtil.VisibilityControl;
 import com.google.gerrit.server.account.AccountVisibility;
 import com.google.gerrit.server.change.SuggestReviewers;
 import com.google.gerrit.server.config.GerritServerConfig;
+import com.google.gerrit.server.permissions.PermissionBackend;
+import com.google.gerrit.server.permissions.PermissionBackendException;
+import com.google.gerrit.server.permissions.ProjectPermission;
 import com.google.gerrit.server.project.ProjectResource;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
@@ -35,14 +39,18 @@ import org.eclipse.jgit.lib.Config;
 
 public class SuggestProjectReviewers extends SuggestReviewers
     implements RestReadView<ProjectResource> {
+  private final PermissionBackend permissionBackend;
+
   @Inject
   SuggestProjectReviewers(
       AccountVisibility av,
       IdentifiedUser.GenericFactory identifiedUserFactory,
       Provider<ReviewDb> dbProvider,
       @GerritServerConfig Config cfg,
-      ReviewersUtil reviewersUtil) {
+      ReviewersUtil reviewersUtil,
+      PermissionBackend permissionBackend) {
     super(av, identifiedUserFactory, dbProvider, cfg, reviewersUtil);
+    this.permissionBackend = permissionBackend;
   }
 
   @Override
@@ -56,7 +64,12 @@ public class SuggestProjectReviewers extends SuggestReviewers
       @Override
       public boolean isVisibleTo(Account.Id account) throws OrmException {
         IdentifiedUser who = identifiedUserFactory.create(account);
-        return rsrc.getControl().forUser(who).isVisible();
+        try {
+          permissionBackend.user(who).project(rsrc.getNameKey()).check(ProjectPermission.ACCESS);
+          return true;
+        } catch (AuthException | PermissionBackendException e) {
+          return false;
+        }
       }
     };
   }
