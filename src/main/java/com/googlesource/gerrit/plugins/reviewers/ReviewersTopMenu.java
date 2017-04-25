@@ -19,7 +19,6 @@ import com.google.gerrit.extensions.annotations.PluginName;
 import com.google.gerrit.extensions.client.MenuItem;
 import com.google.gerrit.extensions.webui.TopMenu;
 import com.google.inject.Inject;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -29,9 +28,11 @@ public class ReviewersTopMenu implements TopMenu {
   @Inject
   ReviewersTopMenu(@PluginName String pluginName) {
     menuEntries = Lists.newArrayList();
-    menuEntries.add(new MenuEntry("Projects", Collections.singletonList(
-        new MenuItem(
-            "Reviewers", "#/x/" + pluginName + "/p/${projectName}", "_self"))));
+    menuEntries.add(
+        new MenuEntry(
+            "Projects",
+            Collections.singletonList(
+                new MenuItem("Reviewers", "#/x/" + pluginName + "/p/${projectName}", "_self"))));
   }
 
   @Override

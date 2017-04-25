@@ -19,6 +19,5 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class ProjectAccessInfo extends JavaScriptObject {
   public final native boolean isOwner() /*-{ return this.is_owner ? true : false; }-*/;
 
-  protected ProjectAccessInfo() {
-  }
+  protected ProjectAccessInfo() {}
 }

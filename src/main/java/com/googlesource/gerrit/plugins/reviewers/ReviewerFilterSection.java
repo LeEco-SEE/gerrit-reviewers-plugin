@@ -20,8 +20,7 @@ class ReviewerFilterSection {
   private final String filter;
   private final Set<String> reviewers;
 
-  ReviewerFilterSection(String filter,
-      Set<String> reviewers) {
+  ReviewerFilterSection(String filter, Set<String> reviewers) {
     this.filter = filter;
     this.reviewers = reviewers;
   }

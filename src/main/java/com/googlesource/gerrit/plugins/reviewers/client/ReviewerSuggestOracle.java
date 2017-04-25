@@ -21,7 +21,6 @@ import com.google.gerrit.plugin.client.rpc.RestApi;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SuggestOracle;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -60,10 +59,8 @@ public class ReviewerSuggestOracle extends SuggestOracle {
       this.name = groupName;
     }
 
-    ReviewerSuggestion(String query, String fullname, String email,
-        String accountId) {
-      super(query, fullname
-          + ((!email.isEmpty()) ? " <" + email + ">" : " (" + accountId + ")"));
+    ReviewerSuggestion(String query, String fullname, String email, String accountId) {
+      super(query, fullname + ((!email.isEmpty()) ? " <" + email + ">" : " (" + accountId + ")"));
       this.name = fullname;
     }
 
@@ -84,36 +81,36 @@ public class ReviewerSuggestOracle extends SuggestOracle {
     if (req.getLimit() > 0) {
       rest.addParameter("n", req.getLimit());
     }
-    rest.get(new AsyncCallback<NativeMap<JavaScriptObject>>() {
-      @Override
-      public void onSuccess(NativeMap<JavaScriptObject> result) {
-        List<String> keys0 = result.sortedKeys();
-        List<Suggestion> suggestions = new ArrayList<>(keys0.size());
-        for (String key0 : keys0) {
-          Set<String> keys1 = Natives.keys(result.get(key0));
-          NativeMap<JavaScriptObject> map1 = result.get(key0).cast();
-          for (String key1 : keys1) {
-            NativeMap<JavaScriptObject> map2 = map1.get(key1).cast();
-            String name =  map2.get(NAME_KEY).toString();
-            if (ACCOUNT_KEY.equals(key1)) {
-              String email = (map2.containsKey(EMAIL_KEY))
-                  ? map2.get(EMAIL_KEY).toString() : "";
-              String accountId = map2.get(ACCOUNT_ID_KEY).toString();
-              suggestions
-                  .add(new ReviewerSuggestion(req.getQuery(), name, email, accountId));
-            } else if (GROUP_KEY.equals(key1)) {
-              suggestions.add(new ReviewerSuggestion(req.getQuery(), name));
+    rest.get(
+        new AsyncCallback<NativeMap<JavaScriptObject>>() {
+          @Override
+          public void onSuccess(NativeMap<JavaScriptObject> result) {
+            List<String> keys0 = result.sortedKeys();
+            List<Suggestion> suggestions = new ArrayList<>(keys0.size());
+            for (String key0 : keys0) {
+              Set<String> keys1 = Natives.keys(result.get(key0));
+              NativeMap<JavaScriptObject> map1 = result.get(key0).cast();
+              for (String key1 : keys1) {
+                NativeMap<JavaScriptObject> map2 = map1.get(key1).cast();
+                String name = map2.get(NAME_KEY).toString();
+                if (ACCOUNT_KEY.equals(key1)) {
+                  String email =
+                      (map2.containsKey(EMAIL_KEY)) ? map2.get(EMAIL_KEY).toString() : "";
+                  String accountId = map2.get(ACCOUNT_ID_KEY).toString();
+                  suggestions.add(new ReviewerSuggestion(req.getQuery(), name, email, accountId));
+                } else if (GROUP_KEY.equals(key1)) {
+                  suggestions.add(new ReviewerSuggestion(req.getQuery(), name));
+                }
+              }
             }
+            done.onSuggestionsReady(req, new Response(suggestions));
           }
-        }
-        done.onSuggestionsReady(req, new Response(suggestions));
-      }
 
-      @Override
-      public void onFailure(Throwable caught) {
-        responseEmptySuggestion(req, done);
-      }
-    });
+          @Override
+          public void onFailure(Throwable caught) {
+            responseEmptySuggestion(req, done);
+          }
+        });
   }
 
   private static void responseEmptySuggestion(Request req, Callback done) {

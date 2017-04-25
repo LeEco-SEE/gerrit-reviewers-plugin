@@ -22,16 +22,13 @@ import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Change;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-
+import java.util.ArrayList;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Set;
-
 class DefaultReviewers implements Runnable {
-  private static final Logger log = LoggerFactory
-      .getLogger(DefaultReviewers.class);
+  private static final Logger log = LoggerFactory.getLogger(DefaultReviewers.class);
 
   private final GerritApi gApi;
   private final Change change;
@@ -42,10 +39,7 @@ class DefaultReviewers implements Runnable {
   }
 
   @Inject
-  DefaultReviewers(
-      GerritApi gApi,
-      @Assisted Change change,
-      @Assisted Set<Account> reviewers) {
+  DefaultReviewers(GerritApi gApi, @Assisted Change change, @Assisted Set<Account> reviewers) {
     this.gApi = gApi;
     this.change = change;
     this.reviewers = reviewers;
@@ -73,10 +67,7 @@ class DefaultReviewers implements Runnable {
         addReviewerInput.reviewer = account.getId().toString();
         in.reviewers.add(addReviewerInput);
       }
-      gApi.changes()
-          .id(change.getId().get())
-          .current()
-          .review(in);
+      gApi.changes().id(change.getId().get()).current().review(in);
     } catch (RestApiException e) {
       log.error("Couldn't add reviewers to the change", e);
     }

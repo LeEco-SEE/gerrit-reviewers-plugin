@@ -26,7 +26,6 @@ import com.google.gerrit.extensions.webui.TopMenu;
 import com.google.gerrit.extensions.webui.WebUiPlugin;
 import com.google.gerrit.server.config.PluginConfigFactory;
 import com.google.inject.Inject;
-
 import org.eclipse.jgit.lib.Config;
 
 public class Module extends FactoryModule {
@@ -34,13 +33,10 @@ public class Module extends FactoryModule {
   private final boolean enableREST;
 
   @Inject
-  public Module(@PluginName String pluginName,
-      PluginConfigFactory pluginCfgFactory) {
+  public Module(@PluginName String pluginName, PluginConfigFactory pluginCfgFactory) {
     Config c = pluginCfgFactory.getGlobalPluginConfig(pluginName);
     this.enableREST = c.getBoolean("reviewers", null, "enableREST", true);
-    this.enableUI = enableREST
-        ? c.getBoolean("reviewers", null, "enableUI", true)
-        : false;
+    this.enableUI = enableREST ? c.getBoolean("reviewers", null, "enableUI", true) : false;
   }
 
   public Module(boolean enableUI, boolean enableREST) {
@@ -51,26 +47,24 @@ public class Module extends FactoryModule {
   @Override
   protected void configure() {
     if (enableUI) {
-      DynamicSet.bind(binder(), TopMenu.class)
-        .to(ReviewersTopMenu.class);
-      DynamicSet.bind(binder(), WebUiPlugin.class)
-        .toInstance(new GwtPlugin("reviewers"));
+      DynamicSet.bind(binder(), TopMenu.class).to(ReviewersTopMenu.class);
+      DynamicSet.bind(binder(), WebUiPlugin.class).toInstance(new GwtPlugin("reviewers"));
     }
 
-    DynamicSet.bind(binder(), RevisionCreatedListener.class)
-        .to(ChangeEventListener.class);
+    DynamicSet.bind(binder(), RevisionCreatedListener.class).to(ChangeEventListener.class);
     factory(DefaultReviewers.Factory.class);
     factory(ReviewersConfig.Factory.class);
 
     if (enableREST) {
-      install(new RestApiModule() {
-        @Override
-        protected void configure() {
-          get(PROJECT_KIND, "reviewers").to(GetReviewers.class);
-          put(PROJECT_KIND, "reviewers").to(PutReviewers.class);
-          get(PROJECT_KIND, "suggest_reviewers").to(SuggestProjectReviewers.class);
-        }
-      });
+      install(
+          new RestApiModule() {
+            @Override
+            protected void configure() {
+              get(PROJECT_KIND, "reviewers").to(GetReviewers.class);
+              put(PROJECT_KIND, "reviewers").to(PutReviewers.class);
+              get(PROJECT_KIND, "suggest_reviewers").to(SuggestProjectReviewers.class);
+            }
+          });
     }
   }
 }

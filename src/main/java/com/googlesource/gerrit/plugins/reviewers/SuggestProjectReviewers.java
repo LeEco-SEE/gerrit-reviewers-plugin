@@ -29,16 +29,15 @@ import com.google.gerrit.server.project.ProjectResource;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
-import org.eclipse.jgit.lib.Config;
-
 import java.io.IOException;
 import java.util.List;
+import org.eclipse.jgit.lib.Config;
 
 public class SuggestProjectReviewers extends SuggestReviewers
-      implements RestReadView<ProjectResource> {
+    implements RestReadView<ProjectResource> {
   @Inject
-  SuggestProjectReviewers(AccountVisibility av,
+  SuggestProjectReviewers(
+      AccountVisibility av,
       IdentifiedUser.GenericFactory identifiedUserFactory,
       Provider<ReviewDb> dbProvider,
       @GerritServerConfig Config cfg,
@@ -49,16 +48,14 @@ public class SuggestProjectReviewers extends SuggestReviewers
   @Override
   public List<SuggestedReviewerInfo> apply(ProjectResource rsrc)
       throws BadRequestException, OrmException, IOException {
-    return reviewersUtil.suggestReviewers(null, this, rsrc.getControl(),
-        getVisibility(rsrc), true);
+    return reviewersUtil.suggestReviewers(null, this, rsrc.getControl(), getVisibility(rsrc), true);
   }
 
   private VisibilityControl getVisibility(final ProjectResource rsrc) {
     return new VisibilityControl() {
       @Override
       public boolean isVisibleTo(Account.Id account) throws OrmException {
-        IdentifiedUser who =
-            identifiedUserFactory.create(account);
+        IdentifiedUser who = identifiedUserFactory.create(account);
         return rsrc.getControl().forUser(who).isVisible();
       }
     };

@@ -21,7 +21,6 @@ import com.google.gerrit.extensions.restapi.RestReadView;
 import com.google.gerrit.server.project.ProjectResource;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import java.util.List;
 
 @Singleton
@@ -34,8 +33,8 @@ class GetReviewers implements RestReadView<ProjectResource> {
   }
 
   @Override
-  public List<ReviewerFilterSection> apply(ProjectResource resource) throws AuthException,
-      BadRequestException, ResourceConflictException, Exception {
+  public List<ReviewerFilterSection> apply(ProjectResource resource)
+      throws AuthException, BadRequestException, ResourceConflictException, Exception {
     return configFactory.create(resource.getNameKey()).getReviewerFilterSections();
   }
 }

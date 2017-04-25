@@ -32,20 +32,18 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwtexpui.globalkey.client.NpTextBox;
-
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public class ReviewersScreen extends HorizontalPanel {
-  private static final String REMOVE_BUTTON_IMG =
-      "plugins/reviewers/static/remove_reviewer.png";
+  private static final String REMOVE_BUTTON_IMG = "plugins/reviewers/static/remove_reviewer.png";
+
   static class Factory implements Screen.EntryPoint {
     @Override
     public void onLoad(Screen screen) {
       screen.setPageTitle("Reviewers");
-      screen.show(
-          new ReviewersScreen(URL.decodeQueryString(screen.getToken(1))));
+      screen.show(new ReviewersScreen(URL.decodeQueryString(screen.getToken(1))));
     }
   }
 
@@ -58,34 +56,37 @@ public class ReviewersScreen extends HorizontalPanel {
     this.projectName = projectName;
     this.rEntries = new HashSet<>();
 
-    new RestApi("access/").addParameter("project", projectName).get(
-        new AsyncCallback<NativeMap<ProjectAccessInfo>>() {
+    new RestApi("access/")
+        .addParameter("project", projectName)
+        .get(
+            new AsyncCallback<NativeMap<ProjectAccessInfo>>() {
 
-        @Override
-        public void onSuccess(NativeMap<ProjectAccessInfo> result) {
-          isOwner = result.get(projectName).isOwner();
-          display();
-        }
+              @Override
+              public void onSuccess(NativeMap<ProjectAccessInfo> result) {
+                isOwner = result.get(projectName).isOwner();
+                display();
+              }
 
-        @Override
-        public void onFailure(Throwable caught) {
-        }
-      });
+              @Override
+              public void onFailure(Throwable caught) {}
+            });
   }
 
   void display() {
-    new RestApi("projects").id(projectName).view("reviewers").get(
-        new AsyncCallback<JsArray<ReviewerFilterSection>>() {
+    new RestApi("projects")
+        .id(projectName)
+        .view("reviewers")
+        .get(
+            new AsyncCallback<JsArray<ReviewerFilterSection>>() {
 
-      @Override
-      public void onSuccess(JsArray<ReviewerFilterSection> result) {
-        display(result);
-      }
+              @Override
+              public void onSuccess(JsArray<ReviewerFilterSection> result) {
+                display(result);
+              }
 
-      @Override
-      public void onFailure(Throwable caught) {
-      }
-    });
+              @Override
+              public void onFailure(Throwable caught) {}
+            });
   }
 
   void display(JsArray<ReviewerFilterSection> sections) {
@@ -116,12 +117,13 @@ public class ReviewersScreen extends HorizontalPanel {
     Button removeButton = Button.wrap(img.getElement());
     removeButton.setStyleName("reviewers-removeButton");
     removeButton.setTitle("remove reviewer");
-    removeButton.addClickHandler(new ClickHandler() {
-      @Override
-      public void onClick(final ClickEvent event) {
-        doSave(Action.REMOVE, e);
-      }
-    });
+    removeButton.addClickHandler(
+        new ClickHandler() {
+          @Override
+          public void onClick(final ClickEvent event) {
+            doSave(Action.REMOVE, e);
+          }
+        });
     removeButton.setVisible(isOwner);
 
     HorizontalPanel p = new HorizontalPanel();
@@ -130,7 +132,7 @@ public class ReviewersScreen extends HorizontalPanel {
     return p;
   }
 
-  Panel createInputPanel(){
+  Panel createInputPanel() {
     Grid inputGrid = new Grid(2, 2);
 
     final NpTextBox filterBox = new NpTextBox();
@@ -147,19 +149,18 @@ public class ReviewersScreen extends HorizontalPanel {
 
     Button addButton = new Button("Add");
     addButton.setStyleName("reviewers-addButton");
-    addButton.addClickHandler(new ClickHandler() {
-      @Override
-      public void onClick(final ClickEvent event) {
-        ReviewerEntry e = new ReviewerEntry(filterBox.getValue(),
-            reviewerBox.getValue());
-        if (!rEntries.contains(e) && !e.filter.isEmpty() &&
-            !e.reviewer.isEmpty()) {
-          doSave(Action.ADD, e);
-        }
-        filterBox.setText("");
-        reviewerBox.setText("");
-      }
-    });
+    addButton.addClickHandler(
+        new ClickHandler() {
+          @Override
+          public void onClick(final ClickEvent event) {
+            ReviewerEntry e = new ReviewerEntry(filterBox.getValue(), reviewerBox.getValue());
+            if (!rEntries.contains(e) && !e.filter.isEmpty() && !e.reviewer.isEmpty()) {
+              doSave(Action.ADD, e);
+            }
+            filterBox.setText("");
+            reviewerBox.setText("");
+          }
+        });
     filterBox.setEnabled(isOwner);
     reviewerBox.setEnabled(isOwner);
     addButton.setEnabled(isOwner);
@@ -178,18 +179,21 @@ public class ReviewersScreen extends HorizontalPanel {
     in.setReviewer(entry.reviewer);
     reset();
 
-    new RestApi("projects").id(projectName).view("reviewers").put(
-        in, new AsyncCallback<JsArray<ReviewerFilterSection>>() {
+    new RestApi("projects")
+        .id(projectName)
+        .view("reviewers")
+        .put(
+            in,
+            new AsyncCallback<JsArray<ReviewerFilterSection>>() {
 
-      @Override
-      public void onSuccess(JsArray<ReviewerFilterSection> result) {
-        display(result);
-      }
+              @Override
+              public void onSuccess(JsArray<ReviewerFilterSection> result) {
+                display(result);
+              }
 
-      @Override
-      public void onFailure(Throwable caught) {
-      }
-    });
+              @Override
+              public void onFailure(Throwable caught) {}
+            });
   }
 
   void reset() {
@@ -217,8 +221,7 @@ public class ReviewersScreen extends HorizontalPanel {
         return false;
       }
       ReviewerEntry other = (ReviewerEntry) o;
-      if (!this.filter.equals(other.filter)
-          || !this.reviewer.equals(other.reviewer)) {
+      if (!this.filter.equals(other.filter) || !this.reviewer.equals(other.reviewer)) {
         return false;
       }
       return true;

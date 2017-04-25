@@ -21,19 +21,15 @@ public class ChangeReviewersInput extends JavaScriptObject {
     return (ChangeReviewersInput) createObject();
   }
 
-  protected ChangeReviewersInput() {
-  }
+  protected ChangeReviewersInput() {}
 
   final void setAction(Action a) {
     setActionRaw(a.name());
   }
 
-  final native void setActionRaw(String a)
-  /*-{ if(a)this.action=a; }-*/;
+  final native void setActionRaw(String a) /*-{ if(a)this.action=a; }-*/;
 
-  final native void setFilter(String f)
-  /*-{ if(f)this.filter=f; }-*/;
+  final native void setFilter(String f) /*-{ if(f)this.filter=f; }-*/;
 
-  final native void setReviewer(String r)
-  /*-{ if(r)this.reviewer=r; }-*/;
+  final native void setReviewer(String r) /*-{ if(r)this.reviewer=r; }-*/;
 }

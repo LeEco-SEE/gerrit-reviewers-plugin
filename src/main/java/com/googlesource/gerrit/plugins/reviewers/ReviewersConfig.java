@@ -25,15 +25,13 @@ import com.google.gerrit.server.git.VersionedMetaData;
 import com.google.gerrit.server.project.NoSuchProjectException;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-
-import org.eclipse.jgit.errors.ConfigInvalidException;
-import org.eclipse.jgit.lib.CommitBuilder;
-import org.eclipse.jgit.lib.Config;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.eclipse.jgit.errors.ConfigInvalidException;
+import org.eclipse.jgit.lib.CommitBuilder;
+import org.eclipse.jgit.lib.Config;
 
 class ReviewersConfig extends VersionedMetaData {
   private static final String FILENAME = "reviewers.config";
@@ -46,12 +44,12 @@ class ReviewersConfig extends VersionedMetaData {
   }
 
   @Inject
-  ReviewersConfig(PluginConfigFactory cfgFactory,
+  ReviewersConfig(
+      PluginConfigFactory cfgFactory,
       @PluginName String pluginName,
       @Assisted Project.NameKey projectName)
       throws NoSuchProjectException {
-    cfg = cfgFactory.getProjectPluginConfigWithInheritance(projectName,
-        pluginName);
+    cfg = cfgFactory.getProjectPluginConfigWithInheritance(projectName, pluginName);
   }
 
   List<ReviewerFilterSection> getReviewerFilterSections() {
@@ -64,8 +62,8 @@ class ReviewersConfig extends VersionedMetaData {
 
   void addReviewer(String filter, String reviewer) {
     if (!newReviewerFilterSection(filter).getReviewers().contains(reviewer)) {
-      List<String> values = new ArrayList<>(Arrays.asList(cfg.getStringList(
-          FILTER, filter, REVIEWER)));
+      List<String> values =
+          new ArrayList<>(Arrays.asList(cfg.getStringList(FILTER, filter, REVIEWER)));
       values.add(reviewer);
       cfg.setStringList(FILTER, filter, REVIEWER, values);
     }
@@ -73,8 +71,8 @@ class ReviewersConfig extends VersionedMetaData {
 
   void removeReviewer(String filter, String reviewer) {
     if (newReviewerFilterSection(filter).getReviewers().contains(reviewer)) {
-      List<String> values = new ArrayList<>(Arrays.asList(cfg.getStringList(
-          FILTER, filter, REVIEWER)));
+      List<String> values =
+          new ArrayList<>(Arrays.asList(cfg.getStringList(FILTER, filter, REVIEWER)));
       values.remove(reviewer);
       if (values.isEmpty()) {
         cfg.unsetSection(FILTER, filter);
@@ -103,8 +101,7 @@ class ReviewersConfig extends VersionedMetaData {
   }
 
   @Override
-  protected boolean onSave(CommitBuilder commit) throws IOException,
-      ConfigInvalidException {
+  protected boolean onSave(CommitBuilder commit) throws IOException, ConfigInvalidException {
     if (Strings.isNullOrEmpty(commit.getMessage())) {
       commit.setMessage("Update reviewers configuration\n");
     }

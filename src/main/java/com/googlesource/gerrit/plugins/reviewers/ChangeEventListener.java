@@ -49,20 +49,17 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.google.inject.Singleton;
-
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-
 @Singleton
 class ChangeEventListener implements RevisionCreatedListener {
-  private static final Logger log = LoggerFactory
-      .getLogger(ChangeEventListener.class);
+  private static final Logger log = LoggerFactory.getLogger(ChangeEventListener.class);
 
   private final AccountResolver accountResolver;
   private final AccountByEmailCache byEmailCache;
@@ -126,68 +123,72 @@ class ChangeEventListener implements RevisionCreatedListener {
     try (Repository git = repoManager.openRepository(projectName);
         RevWalk rw = new RevWalk(git);
         ReviewDb reviewDb = schemaFactory.open()) {
-      ChangeData changeData = changeDataFactory.create(
-          reviewDb, projectName, new Change.Id(c._number));
+      ChangeData changeData =
+          changeDataFactory.create(reviewDb, projectName, new Change.Id(c._number));
       Set<String> reviewers = findReviewers(sections, changeData);
       if (reviewers.isEmpty()) {
         return;
       }
 
       final Change change = changeData.change();
-      final Runnable task = reviewersFactory.create(change,
-          toAccounts(reviewDb, reviewers, projectName,
-              event.getWho().email));
+      final Runnable task =
+          reviewersFactory.create(
+              change, toAccounts(reviewDb, reviewers, projectName, event.getWho().email));
 
-      workQueue.getDefaultQueue().submit(new Runnable() {
-        ReviewDb db = null;
+      workQueue
+          .getDefaultQueue()
+          .submit(
+              new Runnable() {
+                ReviewDb db = null;
 
-        @Override
-        public void run() {
-          RequestContext old = tl.setContext(new RequestContext() {
-
-            @Override
-            public CurrentUser getUser() {
-              return identifiedUserFactory.create(change.getOwner());
-            }
-
-            @Override
-            public Provider<ReviewDb> getReviewDbProvider() {
-              return new Provider<ReviewDb>() {
                 @Override
-                public ReviewDb get() {
-                  if (db == null) {
-                    try {
-                      db = schemaFactory.open();
-                    } catch (OrmException e) {
-                      throw new ProvisionException("Cannot open ReviewDb", e);
+                public void run() {
+                  RequestContext old =
+                      tl.setContext(
+                          new RequestContext() {
+
+                            @Override
+                            public CurrentUser getUser() {
+                              return identifiedUserFactory.create(change.getOwner());
+                            }
+
+                            @Override
+                            public Provider<ReviewDb> getReviewDbProvider() {
+                              return new Provider<ReviewDb>() {
+                                @Override
+                                public ReviewDb get() {
+                                  if (db == null) {
+                                    try {
+                                      db = schemaFactory.open();
+                                    } catch (OrmException e) {
+                                      throw new ProvisionException("Cannot open ReviewDb", e);
+                                    }
+                                  }
+                                  return db;
+                                }
+                              };
+                            }
+                          });
+                  try {
+                    task.run();
+                  } finally {
+                    tl.setContext(old);
+                    if (db != null) {
+                      db.close();
+                      db = null;
                     }
                   }
-                  return db;
                 }
-              };
-            }
-          });
-          try {
-            task.run();
-          } finally {
-            tl.setContext(old);
-            if (db != null) {
-              db.close();
-              db = null;
-            }
-          }
-        }
-      });
+              });
     } catch (OrmException | IOException | QueryParseException x) {
       log.error(x.getMessage(), x);
     }
   }
 
-  private Set<String> findReviewers(List<ReviewerFilterSection> sections,
-      ChangeData changeData) throws OrmException, QueryParseException {
+  private Set<String> findReviewers(List<ReviewerFilterSection> sections, ChangeData changeData)
+      throws OrmException, QueryParseException {
     ImmutableSet.Builder<String> reviewers = ImmutableSet.builder();
-    List<ReviewerFilterSection> found = findReviewerSections(sections,
-        changeData);
+    List<ReviewerFilterSection> found = findReviewerSections(sections, changeData);
     for (ReviewerFilterSection s : found) {
       reviewers.addAll(s.getReviewers());
     }
@@ -196,11 +197,10 @@ class ChangeEventListener implements RevisionCreatedListener {
 
   private List<ReviewerFilterSection> findReviewerSections(
       List<ReviewerFilterSection> sections, ChangeData changeData)
-          throws OrmException, QueryParseException {
+      throws OrmException, QueryParseException {
     ImmutableList.Builder<ReviewerFilterSection> found = ImmutableList.builder();
     for (ReviewerFilterSection s : sections) {
-      if (Strings.isNullOrEmpty(s.getFilter())
-          || s.getFilter().equals("*")) {
+      if (Strings.isNullOrEmpty(s.getFilter()) || s.getFilter().equals("*")) {
         found.add(s);
       } else if (filterMatch(s.getFilter(), changeData)) {
         found.add(s);
@@ -220,8 +220,8 @@ class ChangeEventListener implements RevisionCreatedListener {
     return filterPredicate.asMatchable().match(changeData);
   }
 
-  private Set<Account> toAccounts(ReviewDb reviewDb, Set<String> in,
-      Project.NameKey p, String uploaderEMail) {
+  private Set<Account> toAccounts(
+      ReviewDb reviewDb, Set<String> in, Project.NameKey p, String uploaderEMail) {
     Set<Account> reviewers = Sets.newHashSetWithExpectedSize(in.size());
     GroupMembers groupMembers = null;
     for (String r : in) {
@@ -239,18 +239,17 @@ class ChangeEventListener implements RevisionCreatedListener {
       }
       if (groupMembers == null) {
         groupMembers =
-            groupMembersFactory.create(identifiedUserFactory.create(Iterables
-                .getOnlyElement(byEmailCache.get(uploaderEMail))));
+            groupMembersFactory.create(
+                identifiedUserFactory.create(
+                    Iterables.getOnlyElement(byEmailCache.get(uploaderEMail))));
       }
       try {
-        reviewers.addAll(groupMembers.listAccounts(
-            groupsCollection.get().parse(r).getGroupUUID(), p));
+        reviewers.addAll(
+            groupMembers.listAccounts(groupsCollection.get().parse(r).getGroupUUID(), p));
       } catch (UnprocessableEntityException | NoSuchGroupException e) {
-        log.warn(String.format(
-            "Reviewer %s is neither an account nor a group", r));
+        log.warn(String.format("Reviewer %s is neither an account nor a group", r));
       } catch (NoSuchProjectException e) {
-        log.warn(String.format(
-            "Failed to list accounts for group %s and project %s", r, p));
+        log.warn(String.format("Failed to list accounts for group %s and project %s", r, p));
       } catch (IOException | OrmException e) {
         log.warn(String.format("Failed to list accounts for group %s", r), e);
       }
