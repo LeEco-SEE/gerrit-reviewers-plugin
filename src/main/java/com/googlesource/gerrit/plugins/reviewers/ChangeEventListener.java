@@ -33,6 +33,7 @@ import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.AccountByEmailCache;
 import com.google.gerrit.server.account.AccountResolver;
 import com.google.gerrit.server.account.GroupMembers;
+import com.google.gerrit.server.events.DraftPublishedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
 import com.google.gerrit.server.git.GitRepositoryManager;
@@ -114,11 +115,22 @@ class ChangeEventListener implements EventListener {
 
   @Override
   public void onEvent(Event event) {
-    if (!(event instanceof PatchSetCreatedEvent)) {
-      return;
+    if (event instanceof PatchSetCreatedEvent) {
+      PatchSetCreatedEvent e = (PatchSetCreatedEvent) event;
+      onEvent(new Project.NameKey(e.change.project),
+          Integer.parseInt(e.change.number),
+          Integer.parseInt(e.patchSet.number), e.uploader.email);
+    } else if (event instanceof DraftPublishedEvent) {
+      DraftPublishedEvent e = (DraftPublishedEvent) event;
+      onEvent(new Project.NameKey(e.change.project),
+          Integer.parseInt(e.change.number),
+          Integer.parseInt(e.patchSet.number), e.uploader.email);
     }
-    PatchSetCreatedEvent e = (PatchSetCreatedEvent) event;
-    Project.NameKey projectName = new Project.NameKey(e.change.project);
+  }
+
+  private void onEvent(Project.NameKey projectName, int changeNumber,
+      int patchSetNumber, String email) {
+
     // TODO(davido): we have to cache per project configuration
     ReviewersConfig config = configFactory.create(projectName);
     List<ReviewerFilterSection> sections = config.getReviewerFilterSections();
@@ -130,9 +142,9 @@ class ChangeEventListener implements EventListener {
     try (Repository git = repoManager.openRepository(projectName);
         RevWalk rw = new RevWalk(git);
         ReviewDb reviewDb = schemaFactory.open()) {
-      Change.Id changeId = new Change.Id(Integer.parseInt(e.change.number));
+      Change.Id changeId = new Change.Id(changeNumber);
       PatchSet.Id psId =
-          new PatchSet.Id(changeId, Integer.parseInt(e.patchSet.number));
+          new PatchSet.Id(changeId, patchSetNumber);
       PatchSet ps = reviewDb.patchSets().get(psId);
       if (ps == null) {
         log.warn("Patch set " + psId.get() + " not found.");
@@ -152,7 +164,7 @@ class ChangeEventListener implements EventListener {
 
       final Runnable task =
           reviewersFactory.create(change,
-              toAccounts(reviewers, projectName, e.uploader.email));
+              toAccounts(reviewers, projectName, email));
 
       workQueue.getDefaultQueue().submit(new Runnable() {
         @Override
