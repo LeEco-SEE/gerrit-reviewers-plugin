@@ -36,6 +36,8 @@ Other projects can then override the configuration in their own
   [filter "branch:stable-2.10"]
     reviewer = QAGroup
 
+  [filter "-status:draft"]
+    reviewer = DevGroup
 ```
 
 filter.\<filter\>.reviewer
