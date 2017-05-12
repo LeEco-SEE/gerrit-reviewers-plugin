@@ -38,7 +38,7 @@ Other projects can then override the configuration in their own
 
 ```
 
-filter.<filter>.reviewer
+filter.\<filter\>.reviewer
 :	An account or a group name. Must be an exact match (case sensitive) with the
 	account's email address or username, or the group name.  Multiple `reviewer`
 	occurrences are allowed.
