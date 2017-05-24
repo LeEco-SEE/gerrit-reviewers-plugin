@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gerrit.common.errors.NoSuchGroupException;
+import com.google.gerrit.extensions.annotations.PluginName;
+import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.extensions.events.DraftPublishedListener;
 import com.google.gerrit.extensions.events.RevisionCreatedListener;
@@ -34,6 +36,7 @@ import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.AccountByEmailCache;
 import com.google.gerrit.server.account.AccountResolver;
 import com.google.gerrit.server.account.GroupMembers;
+import com.google.gerrit.server.config.PluginConfigFactory;
 import com.google.gerrit.server.git.GitRepositoryManager;
 import com.google.gerrit.server.git.WorkQueue;
 import com.google.gerrit.server.group.GroupsCollection;
@@ -76,6 +79,7 @@ class ChangeEventListener implements RevisionCreatedListener, DraftPublishedList
   private final ReviewersConfig.Factory configFactory;
   private final Provider<CurrentUser> user;
   private final ChangeQueryBuilder queryBuilder;
+  private final boolean ignoreDrafts;
 
   @Inject
   ChangeEventListener(
@@ -92,7 +96,9 @@ class ChangeEventListener implements RevisionCreatedListener, DraftPublishedList
       final ChangeData.Factory changeDataFactory,
       final ReviewersConfig.Factory configFactory,
       final Provider<CurrentUser> user,
-      final ChangeQueryBuilder queryBuilder) {
+      final ChangeQueryBuilder queryBuilder,
+      final PluginConfigFactory cfgFactory,
+      @PluginName String pluginName) {
     this.accountResolver = accountResolver;
     this.byEmailCache = byEmailCache;
     this.groupsCollection = groupsCollection;
@@ -107,11 +113,19 @@ class ChangeEventListener implements RevisionCreatedListener, DraftPublishedList
     this.configFactory = configFactory;
     this.user = user;
     this.queryBuilder = queryBuilder;
+    this.ignoreDrafts =
+        cfgFactory
+            .getGlobalPluginConfig(pluginName)
+            .getBoolean(pluginName, null, "ignoreDrafts", false);
   }
 
   @Override
   public void onRevisionCreated(RevisionCreatedListener.Event event) {
     ChangeInfo c = event.getChange();
+    if (ignoreDrafts && c.status == ChangeStatus.DRAFT) {
+      log.debug("Ignoring draft change");
+      return;
+    }
     onEvent(new Project.NameKey(c.project), c._number, event.getWho().email);
   }
 
