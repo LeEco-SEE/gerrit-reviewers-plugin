@@ -110,15 +110,13 @@ class ChangeEventListener implements RevisionCreatedListener, DraftPublishedList
   }
 
   @Override
-  public void onRevisionCreated(
-      com.google.gerrit.extensions.events.RevisionCreatedListener.Event event) {
+  public void onRevisionCreated(RevisionCreatedListener.Event event) {
     ChangeInfo c = event.getChange();
     onEvent(new Project.NameKey(c.project), c._number, event.getWho().email);
   }
 
   @Override
-  public void onDraftPublished(
-      com.google.gerrit.extensions.events.DraftPublishedListener.Event event) {
+  public void onDraftPublished(DraftPublishedListener.Event event) {
     ChangeInfo c = event.getChange();
     onEvent(new Project.NameKey(c.project), c._number, event.getWho().email);
   }
