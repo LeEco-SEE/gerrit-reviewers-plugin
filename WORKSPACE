@@ -8,8 +8,10 @@ load_bazlets(
 )
 
 # Release Plugin API
-load("@com_googlesource_gerrit_bazlets//:gerrit_api.bzl",
-     "gerrit_api")
+load(
+    "@com_googlesource_gerrit_bazlets//:gerrit_api.bzl",
+    "gerrit_api",
+)
 
 # Snapshot Plugin API
 #load(
